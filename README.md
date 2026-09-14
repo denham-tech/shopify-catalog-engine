@@ -1,13 +1,14 @@
-# Headless Shopify Catalog Extraction & ETL Engine
+# Shopify Catalog Engine
 
-Autonomous, production-grade extraction engine built with **Python**, **Playwright**, and **Pandas**. Extracts variant schemas, real-time inventory availability, and pricing telemetry directly from dynamic Shopify storefronts into structured SQLite and CSV feeds.
+CLI data extraction tool designed for public Shopify storefront product catalogs. Ingests paginated JSON feeds, unpacks nested variant schemas, and outputs clean tabular snapshots for downstream validation and delta tracking.
 
 ## Features
-- **Headless Ingestion:** Emulates active browser sessions via Playwright to bypass WAF heuristics and scrape guards.
-- **Dynamic Normalization:** Handles complex SKU hierarchies, nested variants, and price casting.
-- **Relational Warehousing:** Automatically validates and persists clean records into an audit SQLite database.
+- **Deterministic Feed Parsing:** Pulls structured product and variant records via Shopify's public catalog endpoints.
+- **Relational Normalization:** Flattens multi-variant products into standard relational rows (`variant_id`, `title`, `sku`, `price`, `available`).
+- **Configurable Crawl Depth:** Supports parameterized page limits and automated rate-limiting backoffs.
 
-## Architecture
-- `engine.py` - Core asynchronous extraction, normalization, and database pipeline.
-- `catalog_warehouse.db` - Local relational sink for analytical queries.
-- `shopify_catalog_audit.csv` - Client-facing operational data deliverable.
+## Usage
+
+```bash
+# Extract live product variants from any Shopify storefront
+python engine.py --url [https://colourpop.com](https://colourpop.com) --pages 1 --output data/live_snapshot.csv

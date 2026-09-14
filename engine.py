@@ -1,86 +1,101 @@
-import asyncio
-import json
-import sqlite3
+"""
+Shopify Public Catalog Ingestion Engine
+Extracts paginated product feeds directly from Shopify storefront endpoints,
+normalizing them into structured relational snapshots for validation and delta monitoring.
+"""
+
+import argparse
+import logging
+import sys
+import time
+from pathlib import Path
+from typing import List, Dict, Any
+import requests
 import pandas as pd
-from playwright.async_api import async_playwright
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger("ShopifyExtractor")
+
 
 class ShopifyCatalogEngine:
-    def __init__(self, base_url: str):
-        self.base_url = base_url.rstrip('/')
-        self.endpoint = f"{self.base_url}/products.json"
-        self.records = []
+    def __init__(self, base_url: str, user_agent: str = "CatalogMonitor/1.0"):
+        # Strip trailing slashes and clean base domain
+        self.base_url = base_url.rstrip("/")
+        self.headers = {"User-Agent": user_agent}
 
-    async def fetch_catalog(self, max_pages: int = 2):
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            )
-            page = await context.new_page()
+    def fetch_page(self, page: int = 1, limit: int = 250) -> List[Dict[str, Any]]:
+        endpoint = f"{self.base_url}/products.json?limit={limit}&page={page}"
+        logger.info(f"Ingesting endpoint: {endpoint}")
+        
+        try:
+            response = requests.get(endpoint, headers=self.headers, timeout=12)
+            if response.status_code == 404:
+                logger.error(f"Endpoint not found (404). Confirm {self.base_url} is a Shopify store.")
+                return []
+            response.raise_for_status()
+            data = response.json()
+            return data.get("products", [])
+        except requests.exceptions.RequestException as e:
+            logger.error(f"HTTP fetch failure on page {page}: {e}")
+            return []
 
-            for page_num in range(1, max_pages + 1):
-                target = f"{self.endpoint}?limit=250&page={page_num}"
-                print(f"[*] Ingesting page {page_num}: {target}")
+    def extract_full_catalog(self, max_pages: int = 5) -> pd.DataFrame:
+        records = []
+        for page in range(1, max_pages + 1):
+            products = self.fetch_page(page=page)
+            if not products:
+                logger.info(f"No further products returned at page {page}. Finalizing ingestion.")
+                break
 
-                try:
-                    response = await page.goto(target, wait_until="networkidle", timeout=20000)
-                    if response.status != 200:
-                        print(f"[!] Warning: HTTP {response.status}. Terminating pagination.")
-                        break
+            for prod in products:
+                prod_title = prod.get("title", "Unknown")
+                for variant in prod.get("variants", []):
+                    records.append({
+                        "variant_id": variant.get("id"),
+                        "title": f"{prod_title} - {variant.get('title', '')}".strip(" -"),
+                        "sku": variant.get("sku") or f"SKU-{variant.get('id')}",
+                        "price": float(variant.get("price", 0.0)),
+                        "available": bool(variant.get("available", False))
+                    })
+            
+            time.sleep(0.5)  # Rate limiting hygiene
 
-                    content = await page.inner_text("body")
-                    data = json.loads(content)
-                    products = data.get("products", [])
+        df = pd.DataFrame(records)
+        logger.info(f"Ingestion complete: Extracted {len(df)} variants across {self.base_url}")
+        return df
 
-                    if not products:
-                        print(f"[*] Reached end of catalog at page {page_num}.")
-                        break
-
-                    for prod in products:
-                        for variant in prod.get("variants", []):
-                            self.records.append({
-                                "product_id": prod.get("id"),
-                                "title": prod.get("title"),
-                                "handle": prod.get("handle"),
-                                "vendor": prod.get("vendor"),
-                                "product_type": prod.get("product_type"),
-                                "variant_id": variant.get("id"),
-                                "variant_title": variant.get("title"),
-                                "sku": variant.get("sku"),
-                                "price": float(variant.get("price", 0.0)),
-                                "available": variant.get("available"),
-                                "inventory_quantity": variant.get("inventory_quantity", None),
-                                "url": f"{self.base_url}/products/{prod.get('handle')}"
-                            })
-
-                except Exception as err:
-                    print(f"[!] Pipeline error on page {page_num}: {err}")
-                    break
-
-            await browser.close()
-
-    def process_and_persist(self):
-        if not self.records:
-            print("[!] No records to process.")
+    def save_snapshot(self, df: pd.DataFrame, output_path: str) -> None:
+        if df.empty:
+            logger.warning("Empty snapshot. Nothing written to disk.")
             return
+        
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        df.to_csv(output_path, index=False)
+        logger.info(f"Snapshot written successfully to {output_path}")
 
-        df = pd.DataFrame(self.records)
-        df["price"] = pd.to_numeric(df["price"], errors="coerce")
-        df.drop_duplicates(subset=["variant_id"], inplace=True)
 
-        csv_filename = "shopify_catalog_audit.csv"
-        df.to_csv(csv_filename, index=False)
-        print(f"[✓] Exported {len(df)} variants to {csv_filename}")
+def main():
+    parser = argparse.ArgumentParser(description="Extract live product catalogs from Shopify stores.")
+    parser.add_argument("--url", "-u", required=True, help="Base storefront URL (e.g., https://colourpop.com or https://gymshark.com)")
+    parser.add_argument("--output", "-o", default="data/live_catalog_snapshot.csv", help="Path to save output CSV")
+    parser.add_argument("--pages", "-p", type=int, default=2, help="Max pagination depth to crawl")
 
-        db_filename = "catalog_warehouse.db"
-        conn = sqlite3.connect(db_filename)
-        df.to_sql("products", conn, if_exists="replace", index=False)
-        conn.close()
-        print(f"[✓] Ingested into database: {db_filename} (Table: 'products')")
+    args = parser.parse_args()
+
+    engine = ShopifyCatalogEngine(base_url=args.url)
+    catalog_df = engine.extract_full_catalog(max_pages=args.pages)
+    
+    if catalog_df.empty:
+        logger.error("Scraper terminated with 0 records extracted.")
+        sys.exit(1)
+
+    engine.save_snapshot(catalog_df, args.output)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
-    target_store = "https://kith.com"
-    engine = ShopifyCatalogEngine(target_store)
-    asyncio.run(engine.fetch_catalog(max_pages=2))
-    engine.process_and_persist()
+    main()
