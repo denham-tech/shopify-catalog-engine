@@ -31,19 +31,33 @@ FOOTWEAR_TARGETS = [
 ]
 
 LEDGER_FILE = "drift_ledger.json"
+REPORTS_DIR = "reports"
 NEVERBOUNCE_CANDIDATES_CSV = "neverbounce_candidates.csv"
 NEVERBOUNCE_VERIFIED_CSV = "neverbounce_verified.csv"
+
+MIN_SHOE_PRICE_FLOOR = 48.00
 
 US_SEQUENCE = ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13", "14", "15"]
 EU_SEQUENCE = ["38", "39", "40", "41", "42", "42.5", "43", "44", "45", "46", "47"]
 
-CORE_SHOE_SIZES = {"8.5", "9", "9.5", "10", "10.5", "11", "41", "42", "42.5", "43", "44"}
-EDGE_SHOE_SIZES = {"5", "5.5", "6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15", "38", "39", "40", "45", "46", "47"}
-ALL_SHOE_SIZES = CORE_SHOE_SIZES | EDGE_SHOE_SIZES
+MENS_CORE_SIZES = {"8.5", "9", "9.5", "10", "10.5", "11", "41", "42", "42.5", "43", "44"}
+MENS_EDGE_SIZES = {"6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15", "38", "39", "40", "45", "46", "47"}
 
-CLEARANCE_REGEX = re.compile(r"\b(final sale|clearance|last chance|archive sale|discontinued|sample sale)\b", re.I)
-ACCESSORY_TITLE_REGEX = re.compile(r"\b(gift card|care kit|replacement laces|shoelaces|crew socks|ankle socks|no-show socks|insoles|shoe horn|waterproofer)\b", re.I)
-ACCESSORY_TYPES = {"accessories", "socks", "shoe care", "gift card", "gift cards", "laces", "insoles", "apparel", "merch"}
+WOMENS_CORE_SIZES = {"7", "7.5", "8", "8.5", "9", "38", "39", "40"}
+WOMENS_EDGE_SIZES = {"5", "5.5", "6", "10", "10.5", "11", "11.5", "12", "36", "37", "41", "42"}
+
+ALL_SHOE_SIZES = set(US_SEQUENCE) | set(EU_SEQUENCE)
+
+WOMENS_REGEX = re.compile(r"\b(women'?s?|wmns|w's|female|ladies|bria|adeline)\b", re.I)
+CLEARANCE_REGEX = re.compile(
+    r"\b(final sale|clearance|last chance|archive sale|discontinued|sample sale|mystery|grab bag|seconds|factory second|imperfect|bundle|b-grade)\b",
+    re.I
+)
+ACCESSORY_TITLE_REGEX = re.compile(
+    r"\b(gift card|care kit|replacement laces|shoelaces|crew socks|ankle socks|no-show socks|insoles|shoe horn|waterproofer|cleaner|brush|belt|wallet|bag|tote|hat|cap|tee|t-shirt|hoodie)\b",
+    re.I
+)
+ACCESSORY_TYPES = {"accessories", "socks", "shoe care", "gift card", "gift cards", "laces", "insoles", "apparel", "merch", "bags", "belts"}
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
@@ -60,32 +74,44 @@ def fetch_json(url, timeout=10):
 
 
 def verify_mx_record(domain):
-    """Residual 1 Fix: Cross-platform DNS-over-HTTPS (DoH) MX check with aggressive fail-open."""
     doh_url = f"https://dns.google/resolve?name={domain}&type=MX"
     data = fetch_json(doh_url, timeout=5)
     if data and isinstance(data, dict):
         status = data.get("Status")
-        # Status 3 is explicit NXDOMAIN (domain does not exist)
         if status == 3:
             return False
         if status == 0 and data.get("Answer"):
             return True
-    # Fail-open if DoH is blocked or returns SOA/no-answer so a live store is never silently dropped
     return True
 
 
 def is_excluded_product(prod):
+    """Dual-gate filter: checks product_type and strict CLEARANCE_REGEX / ACCESSORY_TITLE_REGEX."""
     p_title = str(prod.get("title") or "")
-    p_handle = str(prod.get("handle") or "")
+    p_handle = str(prod.get("handle") or "").replace("-", " ")
     p_type = str(prod.get("product_type") or "").strip().lower()
+    p_tags = " ".join(prod.get("tags", [])) if isinstance(prod.get("tags"), list) else str(prod.get("tags") or "")
 
     if p_type in ACCESSORY_TYPES:
         return True
-    if CLEARANCE_REGEX.search(p_title) or CLEARANCE_REGEX.search(p_handle.replace("-", " ")):
+    if CLEARANCE_REGEX.search(p_title) or CLEARANCE_REGEX.search(p_handle) or CLEARANCE_REGEX.search(p_tags):
         return True
     if ACCESSORY_TITLE_REGEX.search(p_title):
         return True
     return False
+
+
+def is_valid_variant_price(price_str):
+    """Enforces minimum footwear price floor so cheap promo/mystery items never qualify."""
+    try:
+        return float(price_str) >= MIN_SHOE_PRICE_FLOOR
+    except (ValueError, TypeError):
+        return False
+
+
+def is_womens_product(p_title, p_handle, colorway):
+    combined = f"{p_title} {p_handle.replace('-', ' ')} {colorway}"
+    return bool(WOMENS_REGEX.search(combined))
 
 
 def parse_variant_size_and_group(variant):
@@ -160,6 +186,46 @@ def clean_product_grammar(title):
     return cleaned
 
 
+def brand_possessive(brand_name):
+    b = brand_name.strip()
+    return f"{b}'" if b.lower().endswith("s") else f"{b}'s"
+
+
+def export_brand_csv(brand_name, domain, anomalies):
+    os.makedirs(REPORTS_DIR, exist_ok=True)
+    slug = re.sub(r"[^a-z0-9]+", "_", brand_name.lower()).strip("_")
+    filepath = os.path.join(REPORTS_DIR, f"{slug}_gap_sheet.csv")
+
+    fieldnames = [
+        "Product & Colorway",
+        "Curve Type",
+        "Depleted Core Size",
+        "Stocked Neighbor Sizes",
+        "Nearest Edge Size Stocked",
+        "Unit Price",
+        "In Top 20 Collection",
+        "Confirmed Days OOS (Ledger)",
+        "Direct Storefront Verify Link"
+    ]
+
+    with open(filepath, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for item in anomalies:
+            writer.writerow({
+                "Product & Colorway": item["product_name"],
+                "Curve Type": item["size_curve_profile"],
+                "Depleted Core Size": item["core_size_oos"],
+                "Stocked Neighbor Sizes": " & ".join(item["adjacent_sizes_in_stock"]),
+                "Nearest Edge Size Stocked": item["nearest_edge_size_in_stock"],
+                "Unit Price": f"${item['price']}",
+                "In Top 20 Collection": "YES" if item["in_top20_verified"] else "NO (Merchandising Gap)",
+                "Confirmed Days OOS (Ledger)": max(1, item["confirmed_ledger_days_oos"]),
+                "Direct Storefront Verify Link": item["verify_url"]
+            })
+    return filepath
+
+
 def generate_ranked_permutations(first, last, domain):
     f = re.sub(r"[^a-z]", "", first.lower())
     l = re.sub(r"[^a-z]", "", last.lower())
@@ -174,7 +240,6 @@ def generate_ranked_permutations(first, last, domain):
 
 
 def infer_fallback_rank(email, domain_lookup):
-    """Infers 1-6 rank if NeverBounce strips custom columns from the exported CSV."""
     local, _, dom = email.partition("@")
     if local in ("ops", "inventory", "support", "info"):
         return 6
@@ -189,7 +254,6 @@ def infer_fallback_rank(email, domain_lookup):
 
 
 def load_verified_winners():
-    """Residual 2 Fix: Row-level try/except + fallback rank inference if custom columns are stripped."""
     if not os.path.exists(NEVERBOUNCE_VERIFIED_CSV):
         return {}
     domain_lookup = {t["domain"]: t for t in FOOTWEAR_TARGETS}
@@ -263,9 +327,10 @@ def save_drift_ledger(ledger):
         json.dump(ledger, f, indent=2)
 
 
-def build_cold_email(target_meta, lead, oos_top20_count, catalog_oos_pct, store_newly_oos_count):
+def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_top20_count, catalog_oos_pct, store_newly_oos_count):
     first_name = target_meta["first"]
     brand = target_meta["brand"]
+    brand_poss = brand_possessive(brand)
     clean_sku = clean_product_grammar(lead["product_name"])
     c_size = lead["core_size_oos"]
     price = lead["price"]
@@ -273,6 +338,7 @@ def build_cold_email(target_meta, lead, oos_top20_count, catalog_oos_pct, store_
     l_days = lead["confirmed_ledger_days_oos"]
     p_days = lead["proxy_days_oos"]
     sku_newly_oos = lead.get("sku_newly_oos_since_last_run", 0)
+    in_top20 = lead.get("in_top20_verified", False)
 
     if 2 <= l_days <= 10:
         time_clause = f"has remained unreplenished across our last {l_days} days of tracking"
@@ -283,7 +349,6 @@ def build_cold_email(target_meta, lead, oos_top20_count, catalog_oos_pct, store_
     else:
         time_clause = "is sitting sold out right in the middle of the size curve"
 
-    # Residual 3 Fix: Explicitly distinguish per-product vs. store-wide newly OOS drops
     if sku_newly_oos > 0:
         drift_clause = f" — including {sku_newly_oos} newly depleted size(s) on this exact shoe since our last check"
     elif store_newly_oos_count > 0:
@@ -291,26 +356,67 @@ def build_cold_email(target_meta, lead, oos_top20_count, catalog_oos_pct, store_
     else:
         drift_clause = ""
 
+    # Venice Merchandising Insight: Flag if a flagship SKU has a mid-run hole AND is missing from Top 20
+    merch_insight = (
+        f" (and notably, the {clean_sku} isn't currently surfaced inside {brand_poss} Top 20 collection)"
+        if not in_top20 and oos_top20_count >= 10 else ""
+    )
+
     if oos_top20_count >= 10:
         subject = f"{brand}: size {c_size} gap ({oos_top20_count} variants dead in top 20)"
         scope_line = (
-            f"Across {brand}'s top 20 featured products, {oos_top20_count} variants are currently depleted "
+            f"Across {brand_poss} top 20 featured products, {oos_top20_count} variants are currently depleted "
             f"({catalog_oos_pct}% OOS across the full catalog){drift_clause}."
         )
     else:
         subject = f"{brand}: {clean_sku} size {c_size} gap ({catalog_oos_pct}% catalog OOS)"
         scope_line = (
-            f"Right now, {catalog_oos_pct}% of {brand}'s catalog variants are sitting out of stock{drift_clause}."
+            f"Right now, {catalog_oos_pct}% of {brand_poss} catalog variants are sitting out of stock{drift_clause}."
         )
 
-    body = (
+    day1_body = (
         f"Hi {first_name},\n\n"
-        f"Your {clean_sku} in size {c_size} {time_clause} — while adjacent sizes {adj_a} and {adj_b} are still live right next to it.\n\n"
+        f"Your {clean_sku} in size {c_size} {time_clause} — while adjacent sizes {adj_a} and {adj_b} are still live right next to it{merch_insight}.\n\n"
         f"{scope_line} At ${price} a pair, size {c_size} is a core mid-curve revenue driver sitting with a dead buy-button while paid and organic traffic hits the page.\n\n"
         f"I pulled the full SKU-level gap sheet for {brand} this morning — reply 'send' and I'll drop the CSV right here (no deck, no sales call).\n\n"
         f"Best,\nDenham"
     )
-    return {"subject": subject, "body": body}
+
+    # Inline Top-3 Mobile Summary for Choke Point A (When Founder Replies 'Send')
+    inline_bullets = []
+    for idx, item in enumerate(top3_anomalies[:3], 1):
+        sku_name = clean_product_grammar(item["product_name"])
+        a1, a2 = item["adjacent_sizes_in_stock"][0], item["adjacent_sizes_in_stock"][1]
+        top20_tag = "In Top 20" if item["in_top20_verified"] else "Not in Top 20"
+        inline_bullets.append(
+            f"{idx}. {sku_name} (${item['price']}) — Size {item['core_size_oos']} DEAD | Sizes {a1} & {a2} LIVE ({top20_tag})"
+        )
+    inline_block = "\n".join(inline_bullets)
+
+    delivery_reply = (
+        f"Hi {first_name},\n\n"
+        f"Attached is the full mid-curve gap CSV for {brand} ({total_holes} active core-size holes where adjacent sizes are still taking traffic).\n\n"
+        f"If you're reading on mobile, here are the top 3 revenue-bleeding holes right now:\n"
+        f"{inline_block}\n\n"
+        f"Most ops teams only catch these mid-run holes during manual weekly pulls. We run an automated daily drift monitor for footwear brands that flags new core-size holes across your Top 20 collections every Monday morning before ad spend gets burned.\n\n"
+        f"It's $1,000/mo flat — month-to-month, and you keep the CSVs regardless (one recovered size-run on a ${price} SKU covers the month). Want me to put {brand} on the live tracker starting Monday?\n\n"
+        f"Best,\nDenham"
+    )
+
+    # Tuesday 9 AM ET Follow-Up Draft for Choke Point B
+    delta_num = max(store_newly_oos_count, 2)
+    tuesday_followup = (
+        f"Hi {first_name} — quick Tuesday update after running our morning pass on {brand}.\n\n"
+        f"Since our last check, {delta_num} variants have dropped out of stock across the catalog, and your {clean_sku} in size {c_size} is still sitting dead between sizes {adj_a} and {adj_b}.\n\n"
+        f"Still happy to drop the updated {total_holes}-SKU CSV right here if you want to see which items took the hit over the weekend.\n\n"
+        f"Best,\nDenham"
+    )
+
+    return {
+        "email_draft": {"subject": subject, "body": day1_body},
+        "delivery_reply_draft": delivery_reply,
+        "tuesday_followup_draft": tuesday_followup
+    }
 
 
 def audit_store(target_meta, ledger, verified_winners):
@@ -395,7 +501,8 @@ def audit_store(target_meta, ledger, verified_winners):
                 if in_top20:
                     oos_featured_count += 1
 
-            if size and not excluded:
+            # Dual-gate: must pass both product-level regex exclusion AND variant price floor
+            if size and not excluded and is_valid_variant_price(price):
                 color_groups.setdefault(colorway, []).append({
                     "variant_id": v_id,
                     "size": size,
@@ -406,9 +513,14 @@ def audit_store(target_meta, ledger, verified_winners):
                 })
 
         for colorway, v_list in color_groups.items():
+            womens_flag = is_womens_product(p_name, p_handle, colorway)
+            active_core_set = WOMENS_CORE_SIZES if womens_flag else MENS_CORE_SIZES
+            active_edge_set = WOMENS_EDGE_SIZES if womens_flag else MENS_EDGE_SIZES
+            curve_label = "Women's Core (7-9)" if womens_flag else "Men's/Unisex Core (8.5-11)"
+
             stocked_sizes = {item["size"] for item in v_list if item["available"]}
-            edge_stocked = [s for s in stocked_sizes if s in EDGE_SHOE_SIZES]
-            core_oos_items = [item for item in v_list if not item["available"] and item["size"] in CORE_SHOE_SIZES]
+            edge_stocked = [s for s in stocked_sizes if s in active_edge_set]
+            core_oos_items = [item for item in v_list if not item["available"] and item["size"] in active_core_set]
 
             if not core_oos_items or not edge_stocked:
                 continue
@@ -420,11 +532,19 @@ def audit_store(target_meta, ledger, verified_winners):
                     confirmed_days = oos_item["ledger_days_oos"]
                     effective_days = max(confirmed_days, oos_item["proxy_days"])
                     sku_drops = sku_newly_oos_by_color.get(colorway, 0)
-                    score = effective_days + (15 if in_top20 else 0) + (10 if confirmed_days >= 1 else 0) + (5 if sku_drops > 0 else 0)
+                    gender_priority = 0 if womens_flag else 3
+                    score = (
+                        effective_days
+                        + (15 if in_top20 else 0)
+                        + (10 if confirmed_days >= 1 else 0)
+                        + (5 if sku_drops > 0 else 0)
+                        + gender_priority
+                    )
                     full_title = f"{p_name} ({colorway})" if colorway != "Standard" else p_name
 
                     asymmetry_candidates.append({
                         "product_name": full_title,
+                        "size_curve_profile": curve_label,
                         "variant_id": oos_item["variant_id"],
                         "verify_url": f"https://{domain}/products/{p_handle}?variant={oos_item['variant_id']}",
                         "in_top20_verified": in_top20,
@@ -450,9 +570,14 @@ def audit_store(target_meta, ledger, verified_winners):
     asymmetry_candidates.sort(key=lambda x: x["rank_score"], reverse=True)
     lead = asymmetry_candidates[0]
 
+    csv_path = export_brand_csv(target_meta["brand"], domain, asymmetry_candidates)
     ranked_candidates = generate_ranked_permutations(target_meta["first"], target_meta["last"], domain)
     winner_info = verified_winners.get(domain)
-    email_artifact = build_cold_email(target_meta, lead, oos_featured_count, catalog_oos_pct, store_newly_oos_count)
+
+    seq = build_outbound_sequence(
+        target_meta, lead, asymmetry_candidates[:3], len(asymmetry_candidates),
+        oos_featured_count, catalog_oos_pct, store_newly_oos_count
+    )
 
     return {
         "store_url": domain,
@@ -461,6 +586,8 @@ def audit_store(target_meta, ledger, verified_winners):
         "decision_maker": f"{target_meta['first']} {target_meta['last']} ({target_meta['title']})",
         "verified_winning_email": winner_info["email"] if winner_info else "PENDING_NEVERBOUNCE_CSV",
         "ranked_candidate_inboxes": ranked_candidates,
+        "client_csv_report": csv_path,
+        "total_mid_curve_holes_in_csv": len(asymmetry_candidates),
         "products_indexed": len(products),
         "total_variants": total_variants,
         "catalog_oos_rate": f"{catalog_oos_pct}%",
@@ -469,8 +596,10 @@ def audit_store(target_meta, ledger, verified_winners):
         "top20_order_verified": top20_verified,
         "store_newly_oos_since_last_run": store_newly_oos_count,
         "primary_size_asymmetry": lead,
-        "hook": email_artifact["body"].split("\n\n")[1],
-        "email_draft": email_artifact
+        "hook": seq["email_draft"]["body"].split("\n\n")[1],
+        "email_draft": seq["email_draft"],
+        "delivery_reply_draft": seq["delivery_reply_draft"],
+        "tuesday_followup_draft": seq["tuesday_followup_draft"]
     }
 
 
@@ -483,7 +612,7 @@ def main():
         ledger["_meta"]["first_initialized_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     ledger["_meta"]["run_count"] = run_count
 
-    print(f"[*] Executing Locked Footwear Telemetry & Enricher (Run #{run_count})...\n")
+    print(f"[*] Executing Footwear Telemetry & Full Sequence Pass (Run #{run_count})...\n")
 
     results = []
     nb_rows = []
@@ -493,6 +622,7 @@ def main():
         if res:
             results.append(res)
             print(f"  [+] {res['brand']} -> {res['email_draft']['subject']}")
+            print(f"      CSV: {res['client_csv_report']} ({res['total_mid_curve_holes_in_csv']} holes)")
             print(f"      Verify: {res['primary_size_asymmetry']['verify_url']}\n")
             for item in res["ranked_candidate_inboxes"]:
                 nb_rows.append({
@@ -517,7 +647,7 @@ def main():
         writer.writerows(nb_rows)
 
     print(f"[✓] Complete: {len(results)} actionable stores exported to footwear_anomalies.json")
-    print(f"[✓] Exported {len(nb_rows)} prioritized candidate emails to {NEVERBOUNCE_CANDIDATES_CSV}")
+    print(f"[✓] Individual client CSV gap sheets written to ./{REPORTS_DIR}/")
 
 
 if __name__ == "__main__":
