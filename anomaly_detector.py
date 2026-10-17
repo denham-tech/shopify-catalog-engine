@@ -6,39 +6,58 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 
-# 20 Mid-Market DTC Footwear Brands + Verified Founders/CEOs
-FOOTWEAR_TARGETS = [
-    {"domain": "suavs.com", "brand": "Suavs", "first": "Monxi", "last": "Garza", "title": "Founder"},
-    {"domain": "thousandfell.com", "brand": "Thousand Fell", "first": "Stuart", "last": "Ahlum", "title": "Co-Founder"},
-    {"domain": "nisolo.com", "brand": "Nisolo", "first": "Patrick", "last": "Woodyard", "title": "Co-Founder"},
-    {"domain": "helmboots.com", "brand": "HELM Boots", "first": "Joshua", "last": "Bingaman", "title": "Founder"},
-    {"domain": "greats.com", "brand": "GREATS", "first": "Ryan", "last": "Babenzien", "title": "Founder"},
-    {"domain": "amberjack.shop", "brand": "Amberjack", "first": "John", "last": "Peters", "title": "Founder"},
-    {"domain": "koio.co", "brand": "Koio", "first": "Chris", "last": "Wichert", "title": "Co-Founder"},
-    {"domain": "velasca.com", "brand": "Velasca", "first": "Enrico", "last": "Casati", "title": "Co-Founder"},
-    {"domain": "adelanteshoes.com", "brand": "Adelante", "first": "Peter", "last": "Sacco", "title": "Founder"},
-    {"domain": "taftclothing.com", "brand": "TAFT", "first": "Kory", "last": "Stevens", "title": "Founder"},
-    {"domain": "oakstreetbootmakers.com", "brand": "Oak Street", "first": "George", "last": "Vlagos", "title": "Founder"},
-    {"domain": "grantstoneboots.com", "brand": "Grant Stone", "first": "Wyatt", "last": "Gilmore", "title": "Founder"},
-    {"domain": "fluxfootwear.com", "brand": "Flux Footwear", "first": "Isaac", "last": "Mertens", "title": "Co-Founder & CEO"},
-    {"domain": "kizik.com", "brand": "Kizik", "first": "Monte", "last": "Deere", "title": "CEO"},
-    {"domain": "psudo.com", "brand": "PSUDO", "first": "Michael", "last": "Rich", "title": "Founder"},
-    {"domain": "baabuk.com", "brand": "Baabuk", "first": "Dan", "last": "Witting", "title": "Co-Founder"},
-    {"domain": "feiyue-shoes.com", "brand": "Feiyue", "first": "Patrice", "last": "Bastian", "title": "Director"},
-    {"domain": "somfootwear.com", "brand": "SOM Footwear", "first": "Olie", "last": "Marchal", "title": "Founder"},
-    {"domain": "lemsshoes.com", "brand": "Lems Shoes", "first": "Andrew", "last": "Rademacher", "title": "Founder"},
-    {"domain": "xeroshoes.com", "brand": "Xero Shoes", "first": "Steven", "last": "Sashen", "title": "Co-Founder"}
+# 35 Mid-Market DTC Brands (23 Footwear + 12 Raw Denim / Technical Trousers)
+TARGETS = [
+    # --- Cohort 1: Footwear ---
+    {"domain": "suavs.com", "brand": "Suavs", "first": "Monxi", "last": "Garza", "title": "Founder", "vertical": "footwear"},
+    {"domain": "thousandfell.com", "brand": "Thousand Fell", "first": "Stuart", "last": "Ahlum", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "nisolo.com", "brand": "Nisolo", "first": "Patrick", "last": "Woodyard", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "helmboots.com", "brand": "HELM Boots", "first": "Joshua", "last": "Bingaman", "title": "Founder", "vertical": "footwear"},
+    {"domain": "greats.com", "brand": "GREATS", "first": "Ryan", "last": "Babenzien", "title": "Founder", "vertical": "footwear"},
+    {"domain": "amberjack.shop", "brand": "Amberjack", "first": "John", "last": "Peters", "title": "Founder", "vertical": "footwear"},
+    {"domain": "koio.co", "brand": "Koio", "first": "Chris", "last": "Wichert", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "velasca.com", "brand": "Velasca", "first": "Enrico", "last": "Casati", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "adelanteshoes.com", "brand": "Adelante", "first": "Peter", "last": "Sacco", "title": "Founder", "vertical": "footwear"},
+    {"domain": "taftclothing.com", "brand": "TAFT", "first": "Kory", "last": "Stevens", "title": "Founder", "vertical": "footwear"},
+    {"domain": "oakstreetbootmakers.com", "brand": "Oak Street", "first": "George", "last": "Vlagos", "title": "Founder", "vertical": "footwear"},
+    {"domain": "grantstoneboots.com", "brand": "Grant Stone", "first": "Wyatt", "last": "Gilmore", "title": "Founder", "vertical": "footwear"},
+    {"domain": "fluxfootwear.com", "brand": "Flux Footwear", "first": "Isaac", "last": "Mertens", "title": "Co-Founder & CEO", "vertical": "footwear"},
+    {"domain": "kizik.com", "brand": "Kizik", "first": "Monte", "last": "Deere", "title": "CEO", "vertical": "footwear"},
+    {"domain": "psudo.com", "brand": "PSUDO", "first": "Michael", "last": "Rich", "title": "Founder", "vertical": "footwear"},
+    {"domain": "baabuk.com", "brand": "Baabuk", "first": "Dan", "last": "Witting", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "feiyue-shoes.com", "brand": "Feiyue", "first": "Patrice", "last": "Bastian", "title": "Director", "vertical": "footwear"},
+    {"domain": "somfootwear.com", "brand": "SOM Footwear", "first": "Olie", "last": "Marchal", "title": "Founder", "vertical": "footwear"},
+    {"domain": "lemsshoes.com", "brand": "Lems Shoes", "first": "Andrew", "last": "Rademacher", "title": "Founder", "vertical": "footwear"},
+    {"domain": "xeroshoes.com", "brand": "Xero Shoes", "first": "Steven", "last": "Sashen", "title": "Co-Founder", "vertical": "footwear"},
+    {"domain": "sabah.am", "brand": "Sabah", "first": "Mickey", "last": "Ashmore", "title": "Founder", "vertical": "footwear"},
+    {"domain": "dukeanddexter.com", "brand": "Duke + Dexter", "first": "Archie", "last": "Hewlett", "title": "Founder", "vertical": "footwear"},
+    {"domain": "birdies.com", "brand": "Birdies", "first": "Bianca", "last": "Gates", "title": "Co-Founder", "vertical": "footwear"},
+    # --- Cohort 2: Raw Denim & Technical Trousers (Waist 28-40) ---
+    {"domain": "3sixteen.com", "brand": "3sixteen", "first": "Andrew", "last": "Chen", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "railcarfinegoods.com", "brand": "Railcar Fine Goods", "first": "Steven", "last": "Dang", "title": "Founder", "vertical": "waist"},
+    {"domain": "tellason.com", "brand": "Tellason", "first": "Tony", "last": "Patella", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "freenotecloth.com", "brand": "Freenote Cloth", "first": "Matt", "last": "Brodrick", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "leftfieldnyc.com", "brand": "Left Field NYC", "first": "Christian", "last": "McCann", "title": "Founder", "vertical": "waist"},
+    {"domain": "hiroshikato.com", "brand": "Hiroshi Kato", "first": "Hiroshi", "last": "Kato", "title": "Founder", "vertical": "waist"},
+    {"domain": "taylorstitch.com", "brand": "Taylor Stitch", "first": "Michael", "last": "Maher", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "rogueterritory.com", "brand": "Rogue Territory", "first": "Karl", "last": "Thoennessen", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "westernrise.com", "brand": "Western Rise", "first": "Will", "last": "Watters", "title": "Co-Founder", "vertical": "waist"},
+    {"domain": "livsndesigns.com", "brand": "LIVSN Designs", "first": "Andrew", "last": "Gibbs-Dabney", "title": "Founder", "vertical": "waist"},
+    {"domain": "bluffworks.com", "brand": "Bluffworks", "first": "Stefan", "last": "Loble", "title": "Founder", "vertical": "waist"},
+    {"domain": "shopduer.com", "brand": "DUER", "first": "Gary", "last": "Lenett", "title": "Co-Founder", "vertical": "waist"}
 ]
 
 LEDGER_FILE = "drift_ledger.json"
 REPORTS_DIR = "reports"
-NEVERBOUNCE_CANDIDATES_CSV = "neverbounce_candidates.csv"
-NEVERBOUNCE_VERIFIED_CSV = "neverbounce_verified.csv"
+INBOX_CANDIDATES_CSV = "inbox_candidates.csv"
+VERIFIED_INBOXES_CSV = "verified_inboxes.csv"
+LEGACY_VERIFIED_CSV = "neverbounce_verified.csv"
 
-MIN_SHOE_PRICE_FLOOR = 48.00
+MIN_PRICE_FLOOR = 35.00
 
 US_SEQUENCE = ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13", "14", "15"]
 EU_SEQUENCE = ["38", "39", "40", "41", "42", "42.5", "43", "44", "45", "46", "47"]
+WAIST_SEQUENCE = ["28", "29", "30", "31", "32", "33", "34", "35", "36", "38", "40"]
 
 MENS_CORE_SIZES = {"8.5", "9", "9.5", "10", "10.5", "11", "41", "42", "42.5", "43", "44"}
 MENS_EDGE_SIZES = {"6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15", "38", "39", "40", "45", "46", "47"}
@@ -46,7 +65,11 @@ MENS_EDGE_SIZES = {"6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15", "38",
 WOMENS_CORE_SIZES = {"7", "7.5", "8", "8.5", "9", "38", "39", "40"}
 WOMENS_EDGE_SIZES = {"5", "5.5", "6", "10", "10.5", "11", "11.5", "12", "36", "37", "41", "42"}
 
+WAIST_CORE_SIZES = {"31", "32", "33", "34"}
+WAIST_EDGE_SIZES = {"28", "29", "36", "38", "40"}
+
 ALL_SHOE_SIZES = set(US_SEQUENCE) | set(EU_SEQUENCE)
+ALL_WAIST_SIZES = set(WAIST_SEQUENCE)
 
 WOMENS_REGEX = re.compile(r"\b(women'?s?|wmns|w's|female|ladies|bria|adeline)\b", re.I)
 CLEARANCE_REGEX = re.compile(
@@ -54,10 +77,11 @@ CLEARANCE_REGEX = re.compile(
     re.I
 )
 ACCESSORY_TITLE_REGEX = re.compile(
-    r"\b(gift card|care kit|replacement laces|shoelaces|crew socks|ankle socks|no-show socks|insoles|shoe horn|waterproofer|cleaner|brush|belt|wallet|bag|tote|hat|cap|tee|t-shirt|hoodie)\b",
+    r"\b(gift card|care kit|replacement laces|shoelaces|crew socks|ankle socks|no-show socks|insoles|shoe horn|waterproofer|cleaner|brush|belt|wallet|bag|tote|hat|cap|beanie|keychain|wax|oil|hem|hemming)\b",
     re.I
 )
-ACCESSORY_TYPES = {"accessories", "socks", "shoe care", "gift card", "gift cards", "laces", "insoles", "apparel", "merch", "bags", "belts"}
+FOOTWEAR_EXCLUDED_TYPES = {"accessories", "socks", "shoe care", "gift card", "gift cards", "laces", "insoles", "apparel", "merch", "bags", "belts"}
+WAIST_EXCLUDED_TYPES = {"accessories", "socks", "gift card", "gift cards", "shirts", "tops", "tees", "t-shirts", "jackets", "outerwear", "hats", "headwear", "bags", "belts", "care"}
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
@@ -85,26 +109,27 @@ def verify_mx_record(domain):
     return True
 
 
-def is_excluded_product(prod):
-    """Dual-gate filter: checks product_type and strict CLEARANCE_REGEX / ACCESSORY_TITLE_REGEX."""
+def is_excluded_product(prod, vertical):
     p_title = str(prod.get("title") or "")
     p_handle = str(prod.get("handle") or "").replace("-", " ")
     p_type = str(prod.get("product_type") or "").strip().lower()
     p_tags = " ".join(prod.get("tags", [])) if isinstance(prod.get("tags"), list) else str(prod.get("tags") or "")
 
-    if p_type in ACCESSORY_TYPES:
+    excluded_types = WAIST_EXCLUDED_TYPES if vertical == "waist" else FOOTWEAR_EXCLUDED_TYPES
+    if p_type in excluded_types:
         return True
     if CLEARANCE_REGEX.search(p_title) or CLEARANCE_REGEX.search(p_handle) or CLEARANCE_REGEX.search(p_tags):
         return True
     if ACCESSORY_TITLE_REGEX.search(p_title):
         return True
+    if vertical == "waist" and WOMENS_REGEX.search(p_title):
+        return True
     return False
 
 
 def is_valid_variant_price(price_str):
-    """Enforces minimum footwear price floor so cheap promo/mystery items never qualify."""
     try:
-        return float(price_str) >= MIN_SHOE_PRICE_FLOOR
+        return float(price_str) >= MIN_PRICE_FLOOR
     except (ValueError, TypeError):
         return False
 
@@ -114,7 +139,7 @@ def is_womens_product(p_title, p_handle, colorway):
     return bool(WOMENS_REGEX.search(combined))
 
 
-def parse_variant_size_and_group(variant):
+def parse_variant_size_and_group(variant, vertical):
     opts = [
         str(variant.get("option1") or "").strip(),
         str(variant.get("option2") or "").strip(),
@@ -126,17 +151,31 @@ def parse_variant_size_and_group(variant):
     for opt in opts:
         if not opt or opt == "Default Title":
             continue
-        norm = opt.replace("½", ".5").replace("1/2", ".5")
-        norm = re.sub(r"(\d),5\b", r"\1.5", norm)
-        norm = re.sub(r"(?i)\b(us|eu|uk|men'?s|women'?s|size)\b", " ", norm)
-        norm = re.sub(r"(?i)(?<=\d)(d|ee|eee|m|w)\b", "", norm)
 
-        tokens = re.findall(r"\b\d{1,2}(?:\.5)?\b", norm)
-        matched = next((t for t in tokens if t in ALL_SHOE_SIZES), None)
-        if matched and not found_size:
-            found_size = matched
+        if vertical == "waist":
+            combo = re.match(r"^\s*(?:W|Waist\s*)?(28|29|30|31|32|33|34|35|36|38|40)\s*(?:x|/|L|-|\s)\s*(?:L|Inseam\s*)?(\d{2})\s*$", opt, re.I)
+            if combo and not found_size:
+                found_size = combo.group(1)
+                group_parts.append(f'{combo.group(2)}" Inseam')
+                continue
+            norm = re.sub(r"(?i)\b(waist|size|w)\b", " ", opt)
+            norm = re.sub(r"(?i)(?<=\d)(w)\b", "", norm)
+            tokens = re.findall(r"\b(28|29|30|31|32|33|34|35|36|38|40)\b", norm)
+            if tokens and not found_size:
+                found_size = tokens[0]
+            else:
+                group_parts.append(opt)
         else:
-            group_parts.append(opt)
+            norm = opt.replace("½", ".5").replace("1/2", ".5")
+            norm = re.sub(r"(\d),5\b", r"\1.5", norm)
+            norm = re.sub(r"(?i)\b(us|eu|uk|men'?s|women'?s|size)\b", " ", norm)
+            norm = re.sub(r"(?i)(?<=\d)(d|ee|eee|m|w)\b", "", norm)
+            tokens = re.findall(r"\b\d{1,2}(?:\.5)?\b", norm)
+            matched = next((t for t in tokens if t in ALL_SHOE_SIZES), None)
+            if matched and not found_size:
+                found_size = matched
+            else:
+                group_parts.append(opt)
 
     colorway = " / ".join(group_parts) if group_parts else "Standard"
     return found_size, colorway
@@ -156,8 +195,11 @@ def parse_iso_days(iso_str):
         return 0
 
 
-def get_stocked_neighbors(size, stocked_sizes_set):
-    seq = EU_SEQUENCE if size in EU_SEQUENCE else US_SEQUENCE
+def get_stocked_neighbors(size, stocked_sizes_set, vertical):
+    if vertical == "waist":
+        seq = WAIST_SEQUENCE
+    else:
+        seq = EU_SEQUENCE if size in EU_SEQUENCE else US_SEQUENCE
     if size not in seq:
         return []
     idx = seq.index(size)
@@ -178,12 +220,18 @@ def pick_nearest_edge_size(core_size, edge_stocked_list):
 
 
 def clean_product_grammar(title):
-    cleaned = title.strip()
+    """Strips HTML tags, **Restock** flags, non-breaking spaces, and formats bare 2-digit inseams."""
+    cleaned = str(title or "").replace("\xa0", " ")
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    cleaned = re.sub(r"(\*\*[^*]+\*\*|\[[^\]]+\])", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
     cleaned = re.sub(r"(?i)^men'?s\s+the\s+", "Men's ", cleaned)
     cleaned = re.sub(r"(?i)^women'?s\s+the\s+", "Women's ", cleaned)
     if cleaned.lower().startswith("the "):
-        return cleaned[4:]
-    return cleaned
+        cleaned = cleaned[4:]
+    cleaned = re.sub(r"\((\d{2})\)$", r'(\1" Inseam)', cleaned)
+    cleaned = re.sub(r"/\s*(\d{2})\)$", r'/ \1" Inseam)', cleaned)
+    return cleaned.strip()
 
 
 def brand_possessive(brand_name):
@@ -197,7 +245,7 @@ def export_brand_csv(brand_name, domain, anomalies):
     filepath = os.path.join(REPORTS_DIR, f"{slug}_gap_sheet.csv")
 
     fieldnames = [
-        "Product & Colorway",
+        "Product & Variant Group",
         "Curve Type",
         "Depleted Core Size",
         "Stocked Neighbor Sizes",
@@ -213,7 +261,7 @@ def export_brand_csv(brand_name, domain, anomalies):
         writer.writeheader()
         for item in anomalies:
             writer.writerow({
-                "Product & Colorway": item["product_name"],
+                "Product & Variant Group": clean_product_grammar(item["product_name"]),
                 "Curve Type": item["size_curve_profile"],
                 "Depleted Core Size": item["core_size_oos"],
                 "Stocked Neighbor Sizes": " & ".join(item["adjacent_sizes_in_stock"]),
@@ -254,12 +302,15 @@ def infer_fallback_rank(email, domain_lookup):
 
 
 def load_verified_winners():
-    if not os.path.exists(NEVERBOUNCE_VERIFIED_CSV):
+    csv_to_read = VERIFIED_INBOXES_CSV if os.path.exists(VERIFIED_INBOXES_CSV) else (
+        LEGACY_VERIFIED_CSV if os.path.exists(LEGACY_VERIFIED_CSV) else None
+    )
+    if not csv_to_read:
         return {}
-    domain_lookup = {t["domain"]: t for t in FOOTWEAR_TARGETS}
+    domain_lookup = {t["domain"]: t for t in TARGETS}
     valid_by_domain = {}
     try:
-        with open(NEVERBOUNCE_VERIFIED_CSV, "r", encoding="utf-8") as f:
+        with open(csv_to_read, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 try:
@@ -279,10 +330,10 @@ def load_verified_winners():
                     if dom not in valid_by_domain or rank < valid_by_domain[dom]["rank"]:
                         valid_by_domain[dom] = {"email": email, "rank": rank, "status": status}
                 except Exception as row_err:
-                    print(f"[!] Warning: Skipped malformed row in {NEVERBOUNCE_VERIFIED_CSV}: {row_err}")
+                    print(f"[!] Warning: Skipped malformed row in {csv_to_read}: {row_err}")
                     continue
     except Exception as file_err:
-        print(f"[!] Warning: Could not read {NEVERBOUNCE_VERIFIED_CSV}: {file_err}")
+        print(f"[!] Warning: Could not read {csv_to_read}: {file_err}")
         return {}
     return valid_by_domain
 
@@ -319,7 +370,7 @@ def load_drift_ledger():
                 return json.load(f)
         except Exception:
             pass
-    return {"_meta": {"run_count": 0, "first_initialized_utc": None}, "stores": {}}
+    return {"_meta": {"run_count": 0, "first_initialized_utc": None}, "stores": {}, "store_metrics": {}}
 
 
 def save_drift_ledger(ledger):
@@ -327,9 +378,10 @@ def save_drift_ledger(ledger):
         json.dump(ledger, f, indent=2)
 
 
-def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_top20_count, catalog_oos_pct, store_newly_oos_count):
+def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_top20_count, catalog_oos_pct, hero_cov_pct, store_newly_oos_count):
     first_name = target_meta["first"]
     brand = target_meta["brand"]
+    vertical = target_meta.get("vertical", "footwear")
     brand_poss = brand_possessive(brand)
     clean_sku = clean_product_grammar(lead["product_name"])
     c_size = lead["core_size_oos"]
@@ -339,6 +391,10 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
     p_days = lead["proxy_days_oos"]
     sku_newly_oos = lead.get("sku_newly_oos_since_last_run", 0)
     in_top20 = lead.get("in_top20_verified", False)
+
+    size_label = f"waist {c_size}" if vertical == "waist" else f"size {c_size}"
+    unit_noun = "unit" if vertical == "waist" else "pair"
+    item_noun = "style" if vertical == "waist" else "shoe"
 
     if 2 <= l_days <= 10:
         time_clause = f"has remained unreplenished across our last {l_days} days of tracking"
@@ -350,39 +406,42 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
         time_clause = "is sitting sold out right in the middle of the size curve"
 
     if sku_newly_oos > 0:
-        drift_clause = f" — including {sku_newly_oos} newly depleted size(s) on this exact shoe since our last check"
+        drift_clause = f" — including {sku_newly_oos} newly depleted size(s) on this exact {item_noun} since our last check"
     elif store_newly_oos_count > 0:
         drift_clause = f" — with {store_newly_oos_count} additional variants dropping out of stock store-wide since our last check"
     else:
         drift_clause = ""
 
-    # Venice Merchandising Insight: Flag if a flagship SKU has a mid-run hole AND is missing from Top 20
     merch_insight = (
         f" (and notably, the {clean_sku} isn't currently surfaced inside {brand_poss} Top 20 collection)"
         if not in_top20 and oos_top20_count >= 10 else ""
     )
 
+    # Gate Hero SKU coverage so it only fires when coverage is genuinely degraded (<= 85.0%)
+    hero_clause_paren = f"; Hero SKU size coverage down to {hero_cov_pct}%" if hero_cov_pct <= 85.0 else ""
+    hero_clause_standalone = f" (with Hero SKU size coverage down to {hero_cov_pct}%)" if hero_cov_pct <= 85.0 else ""
+
     if oos_top20_count >= 10:
-        subject = f"{brand}: size {c_size} gap ({oos_top20_count} variants dead in top 20)"
+        subject = f"{brand}: {size_label} gap ({oos_top20_count} variants dead in top 20)"
         scope_line = (
             f"Across {brand_poss} top 20 featured products, {oos_top20_count} variants are currently depleted "
-            f"({catalog_oos_pct}% OOS across the full catalog){drift_clause}."
+            f"({catalog_oos_pct}% OOS across the full catalog{hero_clause_paren}){drift_clause}."
         )
     else:
-        subject = f"{brand}: {clean_sku} size {c_size} gap ({catalog_oos_pct}% catalog OOS)"
+        subject = f"{brand}: {clean_sku} {size_label} gap ({catalog_oos_pct}% catalog OOS)"
         scope_line = (
-            f"Right now, {catalog_oos_pct}% of {brand_poss} catalog variants are sitting out of stock{drift_clause}."
+            f"Right now, {catalog_oos_pct}% of {brand_poss} catalog variants are sitting out of stock"
+            f"{hero_clause_standalone}{drift_clause}."
         )
 
     day1_body = (
         f"Hi {first_name},\n\n"
-        f"Your {clean_sku} in size {c_size} {time_clause} — while adjacent sizes {adj_a} and {adj_b} are still live right next to it{merch_insight}.\n\n"
-        f"{scope_line} At ${price} a pair, size {c_size} is a core mid-curve revenue driver sitting with a dead buy-button while paid and organic traffic hits the page.\n\n"
+        f"Your {clean_sku} in {size_label} {time_clause} — while adjacent sizes {adj_a} and {adj_b} are still live right next to it{merch_insight}.\n\n"
+        f"{scope_line} At ${price} a {unit_noun}, {size_label} is a core mid-curve revenue driver sitting with a dead buy-button while paid and organic traffic hits the page.\n\n"
         f"I pulled the full SKU-level gap sheet for {brand} this morning — reply 'send' and I'll drop the CSV right here (no deck, no sales call).\n\n"
         f"Best,\nDenham"
     )
 
-    # Inline Top-3 Mobile Summary for Choke Point A (When Founder Replies 'Send')
     inline_bullets = []
     for idx, item in enumerate(top3_anomalies[:3], 1):
         sku_name = clean_product_grammar(item["product_name"])
@@ -398,17 +457,16 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
         f"Attached is the full mid-curve gap CSV for {brand} ({total_holes} active core-size holes where adjacent sizes are still taking traffic).\n\n"
         f"If you're reading on mobile, here are the top 3 revenue-bleeding holes right now:\n"
         f"{inline_block}\n\n"
-        f"Most ops teams only catch these mid-run holes during manual weekly pulls. We run an automated daily drift monitor for footwear brands that flags new core-size holes across your Top 20 collections every Monday morning before ad spend gets burned.\n\n"
+        f"Most ops teams only catch these mid-run holes during manual weekly pulls. We run an automated daily drift monitor that flags new core-size holes and Hero SKU coverage drops across your Top 20 collections every Monday morning before ad spend gets burned.\n\n"
         f"It's $1,000/mo flat — month-to-month, and you keep the CSVs regardless (one recovered size-run on a ${price} SKU covers the month). Want me to put {brand} on the live tracker starting Monday?\n\n"
         f"Best,\nDenham"
     )
 
-    # Tuesday 9 AM ET Follow-Up Draft for Choke Point B
     delta_num = max(store_newly_oos_count, 2)
     tuesday_followup = (
-        f"Hi {first_name} — quick Tuesday update after running our morning pass on {brand}.\n\n"
-        f"Since our last check, {delta_num} variants have dropped out of stock across the catalog, and your {clean_sku} in size {c_size} is still sitting dead between sizes {adj_a} and {adj_b}.\n\n"
-        f"Still happy to drop the updated {total_holes}-SKU CSV right here if you want to see which items took the hit over the weekend.\n\n"
+        f"Hi {first_name} — quick update after running our morning pass on {brand}.\n\n"
+        f"Since our last check, {delta_num} variants have dropped out of stock across the catalog, and your {clean_sku} in {size_label} is still sitting dead between sizes {adj_a} and {adj_b}.\n\n"
+        f"Still happy to drop the updated {total_holes}-SKU CSV right here if you want to see which items took the hit.\n\n"
         f"Best,\nDenham"
     )
 
@@ -421,7 +479,8 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
 
 def audit_store(target_meta, ledger, verified_winners):
     domain = target_meta["domain"]
-    print(f"[*] Auditing {domain} (DoH MX + Paginated Catalog)...")
+    vertical = target_meta.get("vertical", "footwear")
+    print(f"[*] Auditing {domain} [{vertical.upper()}] (DoH MX + Paginated Catalog)...")
 
     mx_valid = verify_mx_record(domain)
     if not mx_valid:
@@ -436,8 +495,15 @@ def audit_store(target_meta, ledger, verified_winners):
     top20_handles, top20_verified = fetch_top20_handles(domain)
     hero_handles = {p.get("handle") for p in products[:5]}
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    today_prefix = now_iso[:10]
 
     prev_store_state = ledger["stores"].get(domain, {})
+    # Check if this store already had multi-day history before today so same-day re-runs preserve today's newly_oos counts
+    store_has_prior_history = any(
+        parse_iso_days(v.get("first_seen_oos_utc")) >= 1
+        for v in prev_store_state.values()
+        if isinstance(v, dict) and v.get("first_seen_oos_utc")
+    )
     current_store_state = {}
 
     total_variants = 0
@@ -450,11 +516,12 @@ def audit_store(target_meta, ledger, verified_winners):
     asymmetry_candidates = []
 
     for prod in products:
-        p_name = prod.get("title", "Unknown Product")
+        raw_p_name = prod.get("title", "Unknown Product")
+        p_name = clean_product_grammar(raw_p_name)
         p_handle = prod.get("handle", "")
         in_top20 = (p_handle in top20_handles) if top20_verified else False
         in_hero5 = p_handle in hero_handles
-        excluded = is_excluded_product(prod)
+        excluded = is_excluded_product(prod, vertical)
 
         color_groups = {}
         sku_newly_oos_by_color = {}
@@ -463,7 +530,7 @@ def audit_store(target_meta, ledger, verified_winners):
             v_id = str(v.get("id"))
             avail = bool(v.get("available", False))
             price = v.get("price", "0.00")
-            size, colorway = parse_variant_size_and_group(v)
+            size, colorway = parse_variant_size_and_group(v, vertical)
             proxy_days = max(1, parse_iso_days(v.get("updated_at")))
 
             total_variants += 1
@@ -482,6 +549,10 @@ def audit_store(target_meta, ledger, verified_winners):
                 elif prev_v and prev_v.get("first_seen_oos_utc"):
                     first_seen_oos = prev_v["first_seen_oos_utc"]
                     ledger_days_oos = parse_iso_days(first_seen_oos)
+                    # Preserve today's newly-OOS drops if script is re-run on the same UTC date
+                    if store_has_prior_history and str(first_seen_oos).startswith(today_prefix):
+                        store_newly_oos_count += 1
+                        sku_newly_oos_by_color[colorway] = sku_newly_oos_by_color.get(colorway, 0) + 1
                 else:
                     first_seen_oos = now_iso
 
@@ -501,7 +572,6 @@ def audit_store(target_meta, ledger, verified_winners):
                 if in_top20:
                     oos_featured_count += 1
 
-            # Dual-gate: must pass both product-level regex exclusion AND variant price floor
             if size and not excluded and is_valid_variant_price(price):
                 color_groups.setdefault(colorway, []).append({
                     "variant_id": v_id,
@@ -513,10 +583,16 @@ def audit_store(target_meta, ledger, verified_winners):
                 })
 
         for colorway, v_list in color_groups.items():
-            womens_flag = is_womens_product(p_name, p_handle, colorway)
-            active_core_set = WOMENS_CORE_SIZES if womens_flag else MENS_CORE_SIZES
-            active_edge_set = WOMENS_EDGE_SIZES if womens_flag else MENS_EDGE_SIZES
-            curve_label = "Women's Core (7-9)" if womens_flag else "Men's/Unisex Core (8.5-11)"
+            if vertical == "waist":
+                womens_flag = False
+                active_core_set = WAIST_CORE_SIZES
+                active_edge_set = WAIST_EDGE_SIZES
+                curve_label = "Men's Waist Core (31-34)"
+            else:
+                womens_flag = is_womens_product(raw_p_name, p_handle, colorway)
+                active_core_set = WOMENS_CORE_SIZES if womens_flag else MENS_CORE_SIZES
+                active_edge_set = WOMENS_EDGE_SIZES if womens_flag else MENS_EDGE_SIZES
+                curve_label = "Women's Core (7-9)" if womens_flag else "Men's/Unisex Core (8.5-11)"
 
             stocked_sizes = {item["size"] for item in v_list if item["available"]}
             edge_stocked = [s for s in stocked_sizes if s in active_edge_set]
@@ -527,7 +603,7 @@ def audit_store(target_meta, ledger, verified_winners):
 
             for oos_item in core_oos_items:
                 c_size = oos_item["size"]
-                stocked_neighbors = get_stocked_neighbors(c_size, stocked_sizes)
+                stocked_neighbors = get_stocked_neighbors(c_size, stocked_sizes, vertical)
                 if len(stocked_neighbors) == 2:
                     confirmed_days = oos_item["ledger_days_oos"]
                     effective_days = max(confirmed_days, oos_item["proxy_days"])
@@ -540,7 +616,8 @@ def audit_store(target_meta, ledger, verified_winners):
                         + (5 if sku_drops > 0 else 0)
                         + gender_priority
                     )
-                    full_title = f"{p_name} ({colorway})" if colorway != "Standard" else p_name
+                    raw_full = f"{p_name} ({colorway})" if colorway != "Standard" else p_name
+                    full_title = clean_product_grammar(raw_full)
 
                     asymmetry_candidates.append({
                         "product_name": full_title,
@@ -562,6 +639,13 @@ def audit_store(target_meta, ledger, verified_winners):
 
     catalog_oos_pct = round((total_oos / total_variants * 100), 1) if total_variants else 0.0
     hero_bleed_pct = round((hero_oos_v / hero_total_v * 100), 1) if hero_total_v else 0.0
+    hero_coverage_pct = round(100.0 - hero_bleed_pct, 1)
+
+    ledger.setdefault("store_metrics", {})[domain] = {
+        "last_updated_utc": now_iso,
+        "catalog_oos_pct": catalog_oos_pct,
+        "hero_size_coverage_pct": hero_coverage_pct
+    }
 
     if catalog_oos_pct < 5.0 or not asymmetry_candidates:
         print(f"  [~] {domain}: Filtered (<5% OOS or no strict 2-neighbor holes).")
@@ -576,15 +660,16 @@ def audit_store(target_meta, ledger, verified_winners):
 
     seq = build_outbound_sequence(
         target_meta, lead, asymmetry_candidates[:3], len(asymmetry_candidates),
-        oos_featured_count, catalog_oos_pct, store_newly_oos_count
+        oos_featured_count, catalog_oos_pct, hero_coverage_pct, store_newly_oos_count
     )
 
     return {
         "store_url": domain,
         "brand": target_meta["brand"],
+        "vertical": vertical,
         "mx_verified": mx_valid,
         "decision_maker": f"{target_meta['first']} {target_meta['last']} ({target_meta['title']})",
-        "verified_winning_email": winner_info["email"] if winner_info else "PENDING_NEVERBOUNCE_CSV",
+        "verified_winning_email": winner_info["email"] if winner_info else "PENDING_VERIFICATION",
         "ranked_candidate_inboxes": ranked_candidates,
         "client_csv_report": csv_path,
         "total_mid_curve_holes_in_csv": len(asymmetry_candidates),
@@ -592,6 +677,7 @@ def audit_store(target_meta, ledger, verified_winners):
         "total_variants": total_variants,
         "catalog_oos_rate": f"{catalog_oos_pct}%",
         "hero_bleed_rate": f"{hero_bleed_pct}%",
+        "hero_size_coverage_pct": f"{hero_coverage_pct}%",
         "oos_featured_top20_variants": oos_featured_count,
         "top20_order_verified": top20_verified,
         "store_newly_oos_since_last_run": store_newly_oos_count,
@@ -612,42 +698,43 @@ def main():
         ledger["_meta"]["first_initialized_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     ledger["_meta"]["run_count"] = run_count
 
-    print(f"[*] Executing Footwear Telemetry & Full Sequence Pass (Run #{run_count})...\n")
+    print(f"[*] Executing Sanitized Multi-Vertical Telemetry Pass (Run #{run_count} — 35 Targets)...\n")
 
     results = []
     nb_rows = []
 
-    for idx, target_meta in enumerate(FOOTWEAR_TARGETS):
+    for idx, target_meta in enumerate(TARGETS):
         res = audit_store(target_meta, ledger, verified_winners)
         if res:
             results.append(res)
-            print(f"  [+] {res['brand']} -> {res['email_draft']['subject']}")
-            print(f"      CSV: {res['client_csv_report']} ({res['total_mid_curve_holes_in_csv']} holes)")
+            print(f"  [+] {res['brand']} ({res['vertical']}) -> {res['email_draft']['subject']}")
+            print(f"      CSV: {res['client_csv_report']} ({res['total_mid_curve_holes_in_csv']} holes | Hero Coverage: {res['hero_size_coverage_pct']})")
             print(f"      Verify: {res['primary_size_asymmetry']['verify_url']}\n")
             for item in res["ranked_candidate_inboxes"]:
                 nb_rows.append({
                     "brand": res["brand"],
                     "domain": res["store_url"],
+                    "vertical": res["vertical"],
                     "executive": res["decision_maker"],
                     "priority_rank": item["rank"],
                     "inbox_type": item["type"],
                     "email": item["email"]
                 })
-        if idx < len(FOOTWEAR_TARGETS) - 1:
-            time.sleep(1.0)
+        if idx < len(TARGETS) - 1:
+            time.sleep(0.8)
 
     save_drift_ledger(ledger)
 
     with open("footwear_anomalies.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    with open(NEVERBOUNCE_CANDIDATES_CSV, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["brand", "domain", "executive", "priority_rank", "inbox_type", "email"])
+    with open(INBOX_CANDIDATES_CSV, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["brand", "domain", "vertical", "executive", "priority_rank", "inbox_type", "email"])
         writer.writeheader()
         writer.writerows(nb_rows)
 
     print(f"[✓] Complete: {len(results)} actionable stores exported to footwear_anomalies.json")
-    print(f"[✓] Individual client CSV gap sheets written to ./{REPORTS_DIR}/")
+    print(f"[✓] Exported {len(nb_rows)} candidate emails to {INBOX_CANDIDATES_CSV}")
 
 
 if __name__ == "__main__":
