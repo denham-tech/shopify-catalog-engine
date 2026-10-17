@@ -6,45 +6,45 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 
-# 35 Mid-Market DTC Brands (23 Footwear + 12 Raw Denim / Technical Trousers)
+# 35 Mid-Market DTC Brands with Explicit vertical AND size_system ("us" | "eu" | "waist")
 TARGETS = [
-    # --- Cohort 1: Footwear ---
-    {"domain": "suavs.com", "brand": "Suavs", "first": "Monxi", "last": "Garza", "title": "Founder", "vertical": "footwear"},
-    {"domain": "thousandfell.com", "brand": "Thousand Fell", "first": "Stuart", "last": "Ahlum", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "nisolo.com", "brand": "Nisolo", "first": "Patrick", "last": "Woodyard", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "helmboots.com", "brand": "HELM Boots", "first": "Joshua", "last": "Bingaman", "title": "Founder", "vertical": "footwear"},
-    {"domain": "greats.com", "brand": "GREATS", "first": "Ryan", "last": "Babenzien", "title": "Founder", "vertical": "footwear"},
-    {"domain": "amberjack.shop", "brand": "Amberjack", "first": "John", "last": "Peters", "title": "Founder", "vertical": "footwear"},
-    {"domain": "koio.co", "brand": "Koio", "first": "Chris", "last": "Wichert", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "velasca.com", "brand": "Velasca", "first": "Enrico", "last": "Casati", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "adelanteshoes.com", "brand": "Adelante", "first": "Peter", "last": "Sacco", "title": "Founder", "vertical": "footwear"},
-    {"domain": "taftclothing.com", "brand": "TAFT", "first": "Kory", "last": "Stevens", "title": "Founder", "vertical": "footwear"},
-    {"domain": "oakstreetbootmakers.com", "brand": "Oak Street", "first": "George", "last": "Vlagos", "title": "Founder", "vertical": "footwear"},
-    {"domain": "grantstoneboots.com", "brand": "Grant Stone", "first": "Wyatt", "last": "Gilmore", "title": "Founder", "vertical": "footwear"},
-    {"domain": "fluxfootwear.com", "brand": "Flux Footwear", "first": "Isaac", "last": "Mertens", "title": "Co-Founder & CEO", "vertical": "footwear"},
-    {"domain": "kizik.com", "brand": "Kizik", "first": "Monte", "last": "Deere", "title": "CEO", "vertical": "footwear"},
-    {"domain": "psudo.com", "brand": "PSUDO", "first": "Michael", "last": "Rich", "title": "Founder", "vertical": "footwear"},
-    {"domain": "baabuk.com", "brand": "Baabuk", "first": "Dan", "last": "Witting", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "feiyue-shoes.com", "brand": "Feiyue", "first": "Patrice", "last": "Bastian", "title": "Director", "vertical": "footwear"},
-    {"domain": "somfootwear.com", "brand": "SOM Footwear", "first": "Olie", "last": "Marchal", "title": "Founder", "vertical": "footwear"},
-    {"domain": "lemsshoes.com", "brand": "Lems Shoes", "first": "Andrew", "last": "Rademacher", "title": "Founder", "vertical": "footwear"},
-    {"domain": "xeroshoes.com", "brand": "Xero Shoes", "first": "Steven", "last": "Sashen", "title": "Co-Founder", "vertical": "footwear"},
-    {"domain": "sabah.am", "brand": "Sabah", "first": "Mickey", "last": "Ashmore", "title": "Founder", "vertical": "footwear"},
-    {"domain": "dukeanddexter.com", "brand": "Duke + Dexter", "first": "Archie", "last": "Hewlett", "title": "Founder", "vertical": "footwear"},
-    {"domain": "birdies.com", "brand": "Birdies", "first": "Bianca", "last": "Gates", "title": "Co-Founder", "vertical": "footwear"},
+    # --- Cohort 1: Footwear (US & EU Explicitly Partitioned) ---
+    {"domain": "suavs.com", "brand": "Suavs", "first": "Monxi", "last": "Garza", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "thousandfell.com", "brand": "Thousand Fell", "first": "Stuart", "last": "Ahlum", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "nisolo.com", "brand": "Nisolo", "first": "Patrick", "last": "Woodyard", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "helmboots.com", "brand": "HELM Boots", "first": "Joshua", "last": "Bingaman", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "greats.com", "brand": "GREATS", "first": "Ryan", "last": "Babenzien", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "amberjack.shop", "brand": "Amberjack", "first": "John", "last": "Peters", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "koio.co", "brand": "Koio", "first": "Chris", "last": "Wichert", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "velasca.com", "brand": "Velasca", "first": "Enrico", "last": "Casati", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "adelanteshoes.com", "brand": "Adelante", "first": "Peter", "last": "Sacco", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "taftclothing.com", "brand": "TAFT", "first": "Kory", "last": "Stevens", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "oakstreetbootmakers.com", "brand": "Oak Street", "first": "George", "last": "Vlagos", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "grantstoneboots.com", "brand": "Grant Stone", "first": "Wyatt", "last": "Gilmore", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "fluxfootwear.com", "brand": "Flux Footwear", "first": "Isaac", "last": "Mertens", "title": "Co-Founder & CEO", "vertical": "footwear", "size_system": "us"},
+    {"domain": "kizik.com", "brand": "Kizik", "first": "Monte", "last": "Deere", "title": "CEO", "vertical": "footwear", "size_system": "us"},
+    {"domain": "psudo.com", "brand": "PSUDO", "first": "Michael", "last": "Rich", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "baabuk.com", "brand": "Baabuk", "first": "Dan", "last": "Witting", "title": "Co-Founder", "vertical": "footwear", "size_system": "eu"},
+    {"domain": "feiyue-shoes.com", "brand": "Feiyue", "first": "Patrice", "last": "Bastian", "title": "Director", "vertical": "footwear", "size_system": "eu"},
+    {"domain": "somfootwear.com", "brand": "SOM Footwear", "first": "Olie", "last": "Marchal", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "lemsshoes.com", "brand": "Lems Shoes", "first": "Andrew", "last": "Rademacher", "title": "Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "xeroshoes.com", "brand": "Xero Shoes", "first": "Steven", "last": "Sashen", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
+    {"domain": "sabah.am", "brand": "Sabah", "first": "Mickey", "last": "Ashmore", "title": "Founder", "vertical": "footwear", "size_system": "eu"},
+    {"domain": "dukeanddexter.com", "brand": "Duke + Dexter", "first": "Archie", "last": "Hewlett", "title": "Founder", "vertical": "footwear", "size_system": "uk_us"},
+    {"domain": "birdies.com", "brand": "Birdies", "first": "Bianca", "last": "Gates", "title": "Co-Founder", "vertical": "footwear", "size_system": "us"},
     # --- Cohort 2: Raw Denim & Technical Trousers (Waist 28-40) ---
-    {"domain": "3sixteen.com", "brand": "3sixteen", "first": "Andrew", "last": "Chen", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "railcarfinegoods.com", "brand": "Railcar Fine Goods", "first": "Steven", "last": "Dang", "title": "Founder", "vertical": "waist"},
-    {"domain": "tellason.com", "brand": "Tellason", "first": "Tony", "last": "Patella", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "freenotecloth.com", "brand": "Freenote Cloth", "first": "Matt", "last": "Brodrick", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "leftfieldnyc.com", "brand": "Left Field NYC", "first": "Christian", "last": "McCann", "title": "Founder", "vertical": "waist"},
-    {"domain": "hiroshikato.com", "brand": "Hiroshi Kato", "first": "Hiroshi", "last": "Kato", "title": "Founder", "vertical": "waist"},
-    {"domain": "taylorstitch.com", "brand": "Taylor Stitch", "first": "Michael", "last": "Maher", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "rogueterritory.com", "brand": "Rogue Territory", "first": "Karl", "last": "Thoennessen", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "westernrise.com", "brand": "Western Rise", "first": "Will", "last": "Watters", "title": "Co-Founder", "vertical": "waist"},
-    {"domain": "livsndesigns.com", "brand": "LIVSN Designs", "first": "Andrew", "last": "Gibbs-Dabney", "title": "Founder", "vertical": "waist"},
-    {"domain": "bluffworks.com", "brand": "Bluffworks", "first": "Stefan", "last": "Loble", "title": "Founder", "vertical": "waist"},
-    {"domain": "shopduer.com", "brand": "DUER", "first": "Gary", "last": "Lenett", "title": "Co-Founder", "vertical": "waist"}
+    {"domain": "3sixteen.com", "brand": "3sixteen", "first": "Andrew", "last": "Chen", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "railcarfinegoods.com", "brand": "Railcar Fine Goods", "first": "Steven", "last": "Dang", "title": "Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "tellason.com", "brand": "Tellason", "first": "Tony", "last": "Patella", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "freenotecloth.com", "brand": "Freenote Cloth", "first": "Matt", "last": "Brodrick", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "leftfieldnyc.com", "brand": "Left Field NYC", "first": "Christian", "last": "McCann", "title": "Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "hiroshikato.com", "brand": "Hiroshi Kato", "first": "Hiroshi", "last": "Kato", "title": "Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "taylorstitch.com", "brand": "Taylor Stitch", "first": "Michael", "last": "Maher", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "rogueterritory.com", "brand": "Rogue Territory", "first": "Karl", "last": "Thoennessen", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "westernrise.com", "brand": "Western Rise", "first": "Will", "last": "Watters", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "livsndesigns.com", "brand": "LIVSN Designs", "first": "Andrew", "last": "Gibbs-Dabney", "title": "Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "bluffworks.com", "brand": "Bluffworks", "first": "Stefan", "last": "Loble", "title": "Founder", "vertical": "waist", "size_system": "waist"},
+    {"domain": "shopduer.com", "brand": "DUER", "first": "Gary", "last": "Lenett", "title": "Co-Founder", "vertical": "waist", "size_system": "waist"}
 ]
 
 LEDGER_FILE = "drift_ledger.json"
@@ -56,22 +56,30 @@ LEGACY_VERIFIED_CSV = "neverbounce_verified.csv"
 MIN_PRICE_FLOOR = 35.00
 
 US_SEQUENCE = ["5", "5.5", "6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13", "14", "15"]
-EU_SEQUENCE = ["38", "39", "40", "41", "42", "42.5", "43", "44", "45", "46", "47"]
+EU_SEQUENCE = ["36", "37", "38", "39", "40", "41", "42", "42.5", "43", "44", "45", "46", "47"]
 WAIST_SEQUENCE = ["28", "29", "30", "31", "32", "33", "34", "35", "36", "38", "40"]
 
-MENS_CORE_SIZES = {"8.5", "9", "9.5", "10", "10.5", "11", "41", "42", "42.5", "43", "44"}
-MENS_EDGE_SIZES = {"6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15", "38", "39", "40", "45", "46", "47"}
+US_MENS_CORE = {"8.5", "9", "9.5", "10", "10.5", "11"}
+US_MENS_EDGE = {"6", "6.5", "7", "7.5", "12", "12.5", "13", "14", "15"}
 
-WOMENS_CORE_SIZES = {"7", "7.5", "8", "8.5", "9", "38", "39", "40"}
-WOMENS_EDGE_SIZES = {"5", "5.5", "6", "10", "10.5", "11", "11.5", "12", "36", "37", "41", "42"}
+US_WOMENS_CORE = {"7", "7.5", "8", "8.5", "9"}
+US_WOMENS_EDGE = {"5", "5.5", "6", "10", "10.5", "11", "11.5", "12"}
+
+EU_MENS_CORE = {"41", "42", "42.5", "43", "44"}
+EU_MENS_EDGE = {"38", "39", "40", "45", "46", "47"}
+
+EU_WOMENS_CORE = {"38", "39", "40"}
+EU_WOMENS_EDGE = {"36", "37", "41", "42"}
 
 WAIST_CORE_SIZES = {"31", "32", "33", "34"}
 WAIST_EDGE_SIZES = {"28", "29", "36", "38", "40"}
 
-ALL_SHOE_SIZES = set(US_SEQUENCE) | set(EU_SEQUENCE)
-ALL_WAIST_SIZES = set(WAIST_SEQUENCE)
+US_SHOE_SET = set(US_SEQUENCE)
+EU_SHOE_SET = set(EU_SEQUENCE)
+WAIST_SET = set(WAIST_SEQUENCE)
+INSEAM_TOKENS = {"28", "29", "30", "31", "32", "33", "34", "35", "36", "short", "regular", "long", "tall", "unhemmed"}
 
-WOMENS_REGEX = re.compile(r"\b(women'?s?|wmns|w's|female|ladies|bria|adeline)\b", re.I)
+WOMENS_REGEX = re.compile(r"\b(women'?s?|wmns|w's|female|ladies|bria|adeline|ballerina|mary jane)\b", re.I)
 CLEARANCE_REGEX = re.compile(
     r"\b(final sale|clearance|last chance|archive sale|discontinued|sample sale|mystery|grab bag|seconds|factory second|imperfect|bundle|b-grade)\b",
     re.I
@@ -139,14 +147,19 @@ def is_womens_product(p_title, p_handle, colorway):
     return bool(WOMENS_REGEX.search(combined))
 
 
-def parse_variant_size_and_group(variant, vertical):
+def parse_variant_size_and_group(variant, vertical, size_system):
+    """
+    Strictly partitions US shoes, EU shoes, and Men's Waist sizes.
+    Separates base_colorway from inseam sub-variants so 32x30 and 32x32 collapse cleanly.
+    """
     opts = [
         str(variant.get("option1") or "").strip(),
         str(variant.get("option2") or "").strip(),
         str(variant.get("option3") or "").strip()
     ]
     found_size = None
-    group_parts = []
+    inseam_part = None
+    color_parts = []
 
     for opt in opts:
         if not opt or opt == "Default Title":
@@ -156,29 +169,37 @@ def parse_variant_size_and_group(variant, vertical):
             combo = re.match(r"^\s*(?:W|Waist\s*)?(28|29|30|31|32|33|34|35|36|38|40)\s*(?:x|/|L|-|\s)\s*(?:L|Inseam\s*)?(\d{2})\s*$", opt, re.I)
             if combo and not found_size:
                 found_size = combo.group(1)
-                group_parts.append(f'{combo.group(2)}" Inseam')
+                inseam_part = f'{combo.group(2)}" Inseam'
                 continue
-            norm = re.sub(r"(?i)\b(waist|size|w)\b", " ", opt)
-            norm = re.sub(r"(?i)(?<=\d)(w)\b", "", norm)
+
+            norm = re.sub(r"(?i)\b(waist|size|w)\b", " ", opt).strip()
+            norm = re.sub(r"(?i)(?<=\d)(w)\b", "", norm).strip()
             tokens = re.findall(r"\b(28|29|30|31|32|33|34|35|36|38|40)\b", norm)
+
             if tokens and not found_size:
                 found_size = tokens[0]
+            elif found_size and (norm.lower() in INSEAM_TOKENS or re.match(r"^\d{2}(\"|in|\s*inseam)?$", norm, re.I)):
+                digits = re.findall(r"\d{2}", norm)
+                inseam_part = f'{digits[0]}" Inseam' if digits else norm
             else:
-                group_parts.append(opt)
+                color_parts.append(opt)
         else:
             norm = opt.replace("½", ".5").replace("1/2", ".5")
             norm = re.sub(r"(\d),5\b", r"\1.5", norm)
             norm = re.sub(r"(?i)\b(us|eu|uk|men'?s|women'?s|size)\b", " ", norm)
             norm = re.sub(r"(?i)(?<=\d)(d|ee|eee|m|w)\b", "", norm)
             tokens = re.findall(r"\b\d{1,2}(?:\.5)?\b", norm)
-            matched = next((t for t in tokens if t in ALL_SHOE_SIZES), None)
+
+            valid_Pool = EU_SHOE_SET if size_system == "eu" else US_SHOE_SET
+            matched = next((t for t in tokens if t in valid_Pool), None)
             if matched and not found_size:
                 found_size = matched
             else:
-                group_parts.append(opt)
+                color_parts.append(opt)
 
-    colorway = " / ".join(group_parts) if group_parts else "Standard"
-    return found_size, colorway
+    base_colorway = " / ".join(color_parts) if color_parts else "Standard"
+    curve_group = f"{base_colorway} | {inseam_part}" if inseam_part else base_colorway
+    return found_size, base_colorway, curve_group
 
 
 def parse_iso_days(iso_str):
@@ -195,11 +216,13 @@ def parse_iso_days(iso_str):
         return 0
 
 
-def get_stocked_neighbors(size, stocked_sizes_set, vertical):
-    if vertical == "waist":
+def get_stocked_neighbors(size, stocked_sizes_set, size_system):
+    if size_system == "waist":
         seq = WAIST_SEQUENCE
+    elif size_system == "eu":
+        seq = EU_SEQUENCE
     else:
-        seq = EU_SEQUENCE if size in EU_SEQUENCE else US_SEQUENCE
+        seq = US_SEQUENCE
     if size not in seq:
         return []
     idx = seq.index(size)
@@ -220,7 +243,6 @@ def pick_nearest_edge_size(core_size, edge_stocked_list):
 
 
 def clean_product_grammar(title):
-    """Strips HTML tags, **Restock** flags, non-breaking spaces, and formats bare 2-digit inseams."""
     cleaned = str(title or "").replace("\xa0", " ")
     cleaned = re.sub(r"<[^>]+>", " ", cleaned)
     cleaned = re.sub(r"(\*\*[^*]+\*\*|\[[^\]]+\])", " ", cleaned)
@@ -239,13 +261,34 @@ def brand_possessive(brand_name):
     return f"{b}'" if b.lower().endswith("s") else f"{b}'s"
 
 
+def select_distinct_top3(anomalies):
+    """Ensures the Top-3 mobile preview bullets showcase 3 distinct products/colorways."""
+    selected = []
+    seen_handles = set()
+    for item in anomalies:
+        key = item.get("product_handle") or item["product_name"]
+        if key not in seen_handles:
+            selected.append(item)
+            seen_handles.add(key)
+        if len(selected) == 3:
+            return selected
+
+    seen_names = {id(x) for x in selected}
+    for item in anomalies:
+        if id(item) not in seen_names:
+            selected.append(item)
+            if len(selected) == 3:
+                break
+    return selected
+
+
 def export_brand_csv(brand_name, domain, anomalies):
     os.makedirs(REPORTS_DIR, exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "_", brand_name.lower()).strip("_")
     filepath = os.path.join(REPORTS_DIR, f"{slug}_gap_sheet.csv")
 
     fieldnames = [
-        "Product & Variant Group",
+        "Product & Colorway",
         "Curve Type",
         "Depleted Core Size",
         "Stocked Neighbor Sizes",
@@ -261,7 +304,7 @@ def export_brand_csv(brand_name, domain, anomalies):
         writer.writeheader()
         for item in anomalies:
             writer.writerow({
-                "Product & Variant Group": clean_product_grammar(item["product_name"]),
+                "Product & Colorway": clean_product_grammar(item["product_name"]),
                 "Curve Type": item["size_curve_profile"],
                 "Depleted Core Size": item["core_size_oos"],
                 "Stocked Neighbor Sizes": " & ".join(item["adjacent_sizes_in_stock"]),
@@ -378,7 +421,7 @@ def save_drift_ledger(ledger):
         json.dump(ledger, f, indent=2)
 
 
-def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_top20_count, catalog_oos_pct, hero_cov_pct, store_newly_oos_count):
+def build_outbound_sequence(target_meta, lead, distinct_top3, total_holes, oos_top20_count, catalog_oos_pct, hero_cov_pct, store_newly_oos_count):
     first_name = target_meta["first"]
     brand = target_meta["brand"]
     vertical = target_meta.get("vertical", "footwear")
@@ -417,7 +460,6 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
         if not in_top20 and oos_top20_count >= 10 else ""
     )
 
-    # Gate Hero SKU coverage so it only fires when coverage is genuinely degraded (<= 85.0%)
     hero_clause_paren = f"; Hero SKU size coverage down to {hero_cov_pct}%" if hero_cov_pct <= 85.0 else ""
     hero_clause_standalone = f" (with Hero SKU size coverage down to {hero_cov_pct}%)" if hero_cov_pct <= 85.0 else ""
 
@@ -443,12 +485,13 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
     )
 
     inline_bullets = []
-    for idx, item in enumerate(top3_anomalies[:3], 1):
+    for idx, item in enumerate(distinct_top3[:3], 1):
         sku_name = clean_product_grammar(item["product_name"])
         a1, a2 = item["adjacent_sizes_in_stock"][0], item["adjacent_sizes_in_stock"][1]
         top20_tag = "In Top 20" if item["in_top20_verified"] else "Not in Top 20"
+        s_prefix = "Waist" if vertical == "waist" else "Size"
         inline_bullets.append(
-            f"{idx}. {sku_name} (${item['price']}) — Size {item['core_size_oos']} DEAD | Sizes {a1} & {a2} LIVE ({top20_tag})"
+            f"{idx}. {sku_name} (${item['price']}) — {s_prefix} {item['core_size_oos']} DEAD | Sizes {a1} & {a2} LIVE ({top20_tag})"
         )
     inline_block = "\n".join(inline_bullets)
 
@@ -480,7 +523,8 @@ def build_outbound_sequence(target_meta, lead, top3_anomalies, total_holes, oos_
 def audit_store(target_meta, ledger, verified_winners):
     domain = target_meta["domain"]
     vertical = target_meta.get("vertical", "footwear")
-    print(f"[*] Auditing {domain} [{vertical.upper()}] (DoH MX + Paginated Catalog)...")
+    size_system = target_meta.get("size_system", "waist" if vertical == "waist" else "us")
+    print(f"[*] Auditing {domain} [{vertical.upper()} | {size_system.upper()}]...")
 
     mx_valid = verify_mx_record(domain)
     if not mx_valid:
@@ -498,7 +542,6 @@ def audit_store(target_meta, ledger, verified_winners):
     today_prefix = now_iso[:10]
 
     prev_store_state = ledger["stores"].get(domain, {})
-    # Check if this store already had multi-day history before today so same-day re-runs preserve today's newly_oos counts
     store_has_prior_history = any(
         parse_iso_days(v.get("first_seen_oos_utc")) >= 1
         for v in prev_store_state.values()
@@ -513,7 +556,7 @@ def audit_store(target_meta, ledger, verified_winners):
     oos_featured_count = 0
     store_newly_oos_count = 0
 
-    asymmetry_candidates = []
+    raw_candidates = []
 
     for prod in products:
         raw_p_name = prod.get("title", "Unknown Product")
@@ -523,14 +566,14 @@ def audit_store(target_meta, ledger, verified_winners):
         in_hero5 = p_handle in hero_handles
         excluded = is_excluded_product(prod, vertical)
 
-        color_groups = {}
-        sku_newly_oos_by_color = {}
+        curve_groups = {}
+        sku_newly_oos_by_base = {}
 
         for v in prod.get("variants", []):
             v_id = str(v.get("id"))
             avail = bool(v.get("available", False))
             price = v.get("price", "0.00")
-            size, colorway = parse_variant_size_and_group(v, vertical)
+            size, base_colorway, curve_group = parse_variant_size_and_group(v, vertical, size_system)
             proxy_days = max(1, parse_iso_days(v.get("updated_at")))
 
             total_variants += 1
@@ -544,21 +587,20 @@ def audit_store(target_meta, ledger, verified_winners):
             if not avail:
                 if prev_v and prev_v.get("available") is True:
                     store_newly_oos_count += 1
-                    sku_newly_oos_by_color[colorway] = sku_newly_oos_by_color.get(colorway, 0) + 1
+                    sku_newly_oos_by_base[base_colorway] = sku_newly_oos_by_base.get(base_colorway, 0) + 1
                     first_seen_oos = now_iso
                 elif prev_v and prev_v.get("first_seen_oos_utc"):
                     first_seen_oos = prev_v["first_seen_oos_utc"]
                     ledger_days_oos = parse_iso_days(first_seen_oos)
-                    # Preserve today's newly-OOS drops if script is re-run on the same UTC date
                     if store_has_prior_history and str(first_seen_oos).startswith(today_prefix):
                         store_newly_oos_count += 1
-                        sku_newly_oos_by_color[colorway] = sku_newly_oos_by_color.get(colorway, 0) + 1
+                        sku_newly_oos_by_base[base_colorway] = sku_newly_oos_by_base.get(base_colorway, 0) + 1
                 else:
                     first_seen_oos = now_iso
 
             current_store_state[v_id] = {
                 "product": p_name,
-                "colorway": colorway,
+                "colorway": base_colorway,
                 "size": size,
                 "available": avail,
                 "proxy_days_stale": proxy_days,
@@ -573,26 +615,33 @@ def audit_store(target_meta, ledger, verified_winners):
                     oos_featured_count += 1
 
             if size and not excluded and is_valid_variant_price(price):
-                color_groups.setdefault(colorway, []).append({
+                curve_groups.setdefault(curve_group, []).append({
                     "variant_id": v_id,
                     "size": size,
+                    "base_colorway": base_colorway,
                     "available": avail,
                     "ledger_days_oos": ledger_days_oos,
                     "proxy_days": proxy_days,
                     "price": price
                 })
 
-        for colorway, v_list in color_groups.items():
-            if vertical == "waist":
+        for curve_group, v_list in curve_groups.items():
+            base_colorway = v_list[0]["base_colorway"]
+            if size_system == "waist":
                 womens_flag = False
                 active_core_set = WAIST_CORE_SIZES
                 active_edge_set = WAIST_EDGE_SIZES
                 curve_label = "Men's Waist Core (31-34)"
+            elif size_system == "eu":
+                womens_flag = is_womens_product(raw_p_name, p_handle, base_colorway)
+                active_core_set = EU_WOMENS_CORE if womens_flag else EU_MENS_CORE
+                active_edge_set = EU_WOMENS_EDGE if womens_flag else EU_MENS_EDGE
+                curve_label = "Women's EU Core (38-40)" if womens_flag else "Men's/Unisex EU Core (41-44)"
             else:
-                womens_flag = is_womens_product(raw_p_name, p_handle, colorway)
-                active_core_set = WOMENS_CORE_SIZES if womens_flag else MENS_CORE_SIZES
-                active_edge_set = WOMENS_EDGE_SIZES if womens_flag else MENS_EDGE_SIZES
-                curve_label = "Women's Core (7-9)" if womens_flag else "Men's/Unisex Core (8.5-11)"
+                womens_flag = is_womens_product(raw_p_name, p_handle, base_colorway)
+                active_core_set = US_WOMENS_CORE if womens_flag else US_MENS_CORE
+                active_edge_set = US_WOMENS_EDGE if womens_flag else US_MENS_EDGE
+                curve_label = "Women's US Core (7-9)" if womens_flag else "Men's/Unisex US Core (8.5-11)"
 
             stocked_sizes = {item["size"] for item in v_list if item["available"]}
             edge_stocked = [s for s in stocked_sizes if s in active_edge_set]
@@ -603,11 +652,11 @@ def audit_store(target_meta, ledger, verified_winners):
 
             for oos_item in core_oos_items:
                 c_size = oos_item["size"]
-                stocked_neighbors = get_stocked_neighbors(c_size, stocked_sizes, vertical)
+                stocked_neighbors = get_stocked_neighbors(c_size, stocked_sizes, size_system)
                 if len(stocked_neighbors) == 2:
                     confirmed_days = oos_item["ledger_days_oos"]
                     effective_days = max(confirmed_days, oos_item["proxy_days"])
-                    sku_drops = sku_newly_oos_by_color.get(colorway, 0)
+                    sku_drops = sku_newly_oos_by_base.get(base_colorway, 0)
                     gender_priority = 0 if womens_flag else 3
                     score = (
                         effective_days
@@ -616,10 +665,12 @@ def audit_store(target_meta, ledger, verified_winners):
                         + (5 if sku_drops > 0 else 0)
                         + gender_priority
                     )
-                    raw_full = f"{p_name} ({colorway})" if colorway != "Standard" else p_name
+                    raw_full = f"{p_name} ({base_colorway})" if base_colorway != "Standard" else p_name
                     full_title = clean_product_grammar(raw_full)
 
-                    asymmetry_candidates.append({
+                    raw_candidates.append({
+                        "dedup_key": f"{p_handle}::{base_colorway}::{c_size}",
+                        "product_handle": p_handle,
                         "product_name": full_title,
                         "size_curve_profile": curve_label,
                         "variant_id": oos_item["variant_id"],
@@ -647,26 +698,49 @@ def audit_store(target_meta, ledger, verified_winners):
         "hero_size_coverage_pct": hero_coverage_pct
     }
 
-    if catalog_oos_pct < 5.0 or not asymmetry_candidates:
+    if catalog_oos_pct < 5.0 or not raw_candidates:
         print(f"  [~] {domain}: Filtered (<5% OOS or no strict 2-neighbor holes).")
         return None
 
+    # Collapse Waist/Inseam duplicates so 32x30 and 32x32 on the same pant count as ONE waist-32 hole
+    raw_candidates.sort(key=lambda x: x["rank_score"], reverse=True)
+    collapsed_map = {}
+    for cand in raw_candidates:
+        d_key = cand["dedup_key"]
+        if d_key not in collapsed_map:
+            clean_cand = {k: v for k, v in cand.items() if k != "dedup_key"}
+            collapsed_map[d_key] = clean_cand
+
+    asymmetry_candidates = list(collapsed_map.values())
     asymmetry_candidates.sort(key=lambda x: x["rank_score"], reverse=True)
     lead = asymmetry_candidates[0]
+    distinct_top3 = select_distinct_top3(asymmetry_candidates)
+
+    # Strip internal product_handle helper before JSON serialization
+    for item in asymmetry_candidates:
+        item.pop("product_handle", None)
 
     csv_path = export_brand_csv(target_meta["brand"], domain, asymmetry_candidates)
     ranked_candidates = generate_ranked_permutations(target_meta["first"], target_meta["last"], domain)
     winner_info = verified_winners.get(domain)
 
     seq = build_outbound_sequence(
-        target_meta, lead, asymmetry_candidates[:3], len(asymmetry_candidates),
+        target_meta, lead, distinct_top3, len(asymmetry_candidates),
         oos_featured_count, catalog_oos_pct, hero_coverage_pct, store_newly_oos_count
+    )
+
+    send_wave = (
+        "Week 1 (Multi-Day Verified Cohort)"
+        if lead["confirmed_ledger_days_oos"] >= 2
+        else "Week 2 (Saturday Expansion Cohort)"
     )
 
     return {
         "store_url": domain,
         "brand": target_meta["brand"],
         "vertical": vertical,
+        "size_system": size_system,
+        "send_wave": send_wave,
         "mx_verified": mx_valid,
         "decision_maker": f"{target_meta['first']} {target_meta['last']} ({target_meta['title']})",
         "verified_winning_email": winner_info["email"] if winner_info else "PENDING_VERIFICATION",
@@ -698,7 +772,7 @@ def main():
         ledger["_meta"]["first_initialized_utc"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     ledger["_meta"]["run_count"] = run_count
 
-    print(f"[*] Executing Sanitized Multi-Vertical Telemetry Pass (Run #{run_count} — 35 Targets)...\n")
+    print(f"[*] Executing Locked Multi-Vertical Telemetry Pass (Run #{run_count} — 35 Targets)...\n")
 
     results = []
     nb_rows = []
@@ -707,8 +781,8 @@ def main():
         res = audit_store(target_meta, ledger, verified_winners)
         if res:
             results.append(res)
-            print(f"  [+] {res['brand']} ({res['vertical']}) -> {res['email_draft']['subject']}")
-            print(f"      CSV: {res['client_csv_report']} ({res['total_mid_curve_holes_in_csv']} holes | Hero Coverage: {res['hero_size_coverage_pct']})")
+            print(f"  [+] {res['brand']} ({res['size_system'].upper()} | {res['send_wave'].split()[0]} {res['send_wave'].split()[1]}) -> {res['email_draft']['subject']}")
+            print(f"      CSV: {res['client_csv_report']} ({res['total_mid_curve_holes_in_csv']} collapsed holes)")
             print(f"      Verify: {res['primary_size_asymmetry']['verify_url']}\n")
             for item in res["ranked_candidate_inboxes"]:
                 nb_rows.append({
@@ -723,6 +797,15 @@ def main():
         if idx < len(TARGETS) - 1:
             time.sleep(0.8)
 
+    # Sort queue: Week 1 Multi-Day Cohort first, then highest rank_score
+    results.sort(
+        key=lambda r: (
+            1 if r["primary_size_asymmetry"]["confirmed_ledger_days_oos"] >= 2 else 0,
+            r["primary_size_asymmetry"]["rank_score"]
+        ),
+        reverse=True
+    )
+
     save_drift_ledger(ledger)
 
     with open("footwear_anomalies.json", "w", encoding="utf-8") as f:
@@ -733,7 +816,7 @@ def main():
         writer.writeheader()
         writer.writerows(nb_rows)
 
-    print(f"[✓] Complete: {len(results)} actionable stores exported to footwear_anomalies.json")
+    print(f"[✓] Complete: {len(results)} actionable stores exported to footwear_anomalies.json (Wave-Sorted)")
     print(f"[✓] Exported {len(nb_rows)} candidate emails to {INBOX_CANDIDATES_CSV}")
 
 
